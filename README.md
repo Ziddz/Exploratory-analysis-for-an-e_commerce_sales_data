@@ -1,6 +1,6 @@
 # Exploratory-analysis-for-an-e_commerce_sales_data
 
-Exploratory data analysis using an e-commerce data set
+Exploratory data analysis using an e-commerce dataset using R programming
 
 The quesitons answered in this report are as follows
 1. What is the average sales per month?
