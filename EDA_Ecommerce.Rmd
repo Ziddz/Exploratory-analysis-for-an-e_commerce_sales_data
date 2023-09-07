@@ -1,0 +1,184 @@
+---
+title: "Analysis of an E-Commerce Sales Data"
+output: html_notebook
+---
+
+#### Importing all the necessary libraries
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(scales)
+```
+
+#### Importing the data.
+
+```{r}
+data<- read.csv("Amazon_Sale_Report.csv")
+```
+
+#### Checking the column attributes of the dataset.
+
+```{r}
+colnames(data)
+```
+
+#### Covert into the appropriate naming convention(Sales.Channel *into* sales_channel)
+
+```{r}
+data<- clean_names(data)
+colnames(data)
+```
+
+#### Checking the datatype of each column.
+
+```{r}
+str(data)
+```
+
+From this we can see that multiple column has wrong datatypes, such as Date is in the datatype chr instead of Date datatype.
+
+```{r}
+data$date<- mdy(data$date)
+data$amount <- as.numeric(data$amount)
+str(data)
+```
+
+We can see we have changed the datatype of date from chr to Date.
+
+#### We can see that the column ship_state has some inaccuracy, like we can see that bihar has multiple entries like Bihar, BIHAR etc. We should correct it to get an explicit data analysis.
+
+```{r}
+data$ship_state <- tolower(data$ship_state)
+data$ship_state <- str_to_title(data$ship_state)
+```
+
+This would alter the entries such that the first letter is uppercase and the rest are lowercase.
+
+#### Now we check for the null values and we alter the values, or remove the null values.
+
+```{r}
+sapply(data, function(x) sum(is.na(x)))
+```
+
+```{r}
+data$amount[is.na(data$amount)] <- 0
+data$`ship_city`[is.na(data$`ship_city`)] <- "Missing"
+data <- data[!is.na(data$`ship_postal_code`),]
+```
+
+```{r}
+sapply(data, function(x) sum(is.na(x)))
+```
+
+### [**Answering the question related to the data**]{.underline}
+
+#### **What is the average sales per month?**
+
+```{r}
+data %>% 
+  mutate(Month = format(as.Date(date, "%m-%d-%y"), "%m")) %>% 
+  group_by(Month) %>%
+  summarise(Avg_Sales = mean(amount))
+```
+
+```{r}
+data$Month <- floor_date(as.Date(data$date, "%m-%d-%y"), unit = "month")
+```
+
+```{r}
+data2 <- data %>% 
+  group_by(Month) %>%
+  summarize(AvgSales = mean(amount))
+```
+
+```{r}
+# Line chart 
+ggplot(data2, aes(x = Month, y = AvgSales)) +
+  geom_line() + 
+  scale_y_continuous(labels = label_number()) + theme_minimal()
+```
+
+```{r}
+# Heatmap of sales by month and category
+ggplot(data) +
+  geom_tile(aes(x = Month, y = category, fill = category)) + theme_minimal()
+```
+
+#### **Which market (state) generated the most sales on average?**
+
+```{r}
+data %>% 
+  group_by(`ship_state`) %>%
+  summarise(Avg_Sales = mean(amount)) %>%
+  arrange(desc(Avg_Sales))
+```
+
+```{r}
+data %>%
+  group_by(`ship_state`) %>%
+  summarise(Avg_Sales = mean(amount)) %>%
+  arrange(desc(Avg_Sales)) %>%
+  head(10) %>%
+  ggplot(aes(x = reorder(ship_state, -Avg_Sales), y = Avg_Sales)) +
+  geom_bar(stat = "identity", fill = "orange") +
+  labs(x = "State", y = "Average Sales") +
+  theme_minimal() +
+  coord_flip()
+```
+
+#### **Which category of products sell best?**
+
+```{r}
+data2_summary <- data %>%
+  group_by(category) %>%
+  summarise(Total_Sales = sum(amount)) %>%
+  arrange(desc(Total_Sales))
+```
+
+```{r}
+# Create a horizontal bar chart
+bar_chart <- ggplot(data2_summary, aes(x = reorder(category, -Total_Sales), y = Total_Sales)) +
+  geom_bar(stat = "identity", fill = "lightblue") +
+  labs(x = "Category", y = "Total Sales") +
+  scale_y_continuous(labels = label_number()) +
+  theme_minimal()
+
+# Display the bar chart
+print(bar_chart)
+```
+
+#### **When were the best- and worst-selling periods?**
+
+```{r}
+data %>%
+  mutate(Month = format(as.Date(date, "%m-%d-%y"), "%m")) %>%
+  group_by(Month) %>%
+  summarise(Sales = sum(amount)) %>%
+  ggplot(aes(Month, Sales, fill = Month)) + 
+  geom_col()+
+  labs(
+    title = "Sales by Month",
+    y = "Total Sales"  
+  )+
+  scale_y_continuous(labels = label_number()) + theme_minimal()
+```
+
+#### **What is the average order value (AOV) for each product category?**
+
+```{r}
+data %>%
+  group_by(category) %>%
+  summarise(AOV = mean(amount))
+```
+
+```{r}
+#Visualize AOV
+data %>% 
+  group_by(category) %>%
+  summarise(AOV = mean(amount)) %>%
+  ggplot(aes(x=category, y=AOV, fill = category)) +
+  geom_col() +
+  labs(title="Average Order Value by Product Category")+theme_minimal()
+```
