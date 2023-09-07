@@ -9,7 +9,8 @@ The quesitons answered in this report are as follows
 4. When are the best and worst selling periods?
 5. What is the Average Order Value for each product category?
 
-Lnaguage Used: R
-Dataset used:- https://drive.google.com/file/d/1Ub5bWOIctvn_u7c1nlBmS3qFNw1klgFq/view?usp=drive_link
+Language Used: R
+
+Dataset used for the report:- https://drive.google.com/file/d/1Ub5bWOIctvn_u7c1nlBmS3qFNw1klgFq/view?usp=drive_link
 
 (Some of the cleaning is done in Google Sheets.)
